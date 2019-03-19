@@ -120,8 +120,8 @@ case "$action" in
         else
             echo "Slave not exist, set a new for you now."
 
-            no=$(docker images lava-dispatcher-android:$version | wc -l)
-            if [[ $no -eq 1 ]]; then
+            no=$(docker images -q lava-dispatcher-android:$version | wc -l)
+            if [[ $no -eq 0 ]]; then
                 echo "No local docker image found, use prebuilt image on dockerhub."
                 target_image=atline/lava-dispatcher-android:$version
             else

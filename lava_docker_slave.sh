@@ -28,6 +28,12 @@ DESCRIPTION
 HELPDOC
 }
 
+# check user
+if [ 0 -ne $EUID ]; then
+    echo 'Please run this script as root.'
+    exit 1
+fi
+
 # get options
 parsed_args=$(getopt -o a:p:n:v:x:m: -n $(basename $0) -- "$@")
 if [ 0 -ne $? ]; then

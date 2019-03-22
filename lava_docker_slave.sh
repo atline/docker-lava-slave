@@ -114,8 +114,11 @@ case "$action" in
             exit 1
         fi
 
+        set +e
         status=$(docker inspect --format '{{ .State.Status }}' "$container_name" 2>&1)
-        if [[ $? -eq 0 ]]; then
+        rc=$?
+        set -e
+        if [[ $rc -eq 0 ]]; then
             if [[ $status == 'exited' ]]; then
                 echo "Slave existed, start it for you now."
                 rm -fr ~/.lava/"$container_name"

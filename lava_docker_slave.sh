@@ -1,12 +1,12 @@
-#!/bin/bash
+#!/bin/bash -e
 
 function usage()
 {
     cat<<-HELPDOC
 NAME
-        $(basename $0) - lava android docker slave install script
+        $(basename "$0") - lava android docker slave install script
 SYNOPSIS
-        $(basename $0) -a <action> -p <prefix> -n <name> -v <version> -x <proxy> -m <master>
+        $(basename "$0") -a <action> -p <prefix> -n <name> -v <version> -x <proxy> -m <master>
 DESCRIPTION
         -a:     specify action of this script
         -p:     prefix of worker name, fill in site please
@@ -17,13 +17,13 @@ DESCRIPTION
 
         Example:
         build:   can skip this if want to use prebuilt customized docker image on dockerhub
-                 $(basename $0) -a build -v 2019.03 -x http://apac.nics.nxp.com:8080
+                 $(basename "$0") -a build -v 2019.03 -x http://apac.nics.nxp.com:8080
         start:   new/start a lava docker slave
-                 $(basename $0) -a start -p shanghai -n orange -v 2019.03 -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
+                 $(basename "$0") -a start -p shanghai -n apple -v 2019.03 -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
         stop:    stop a lava docker slave
-                 $(basename $0) -a stop -p shanghai -n apple
+                 $(basename "$0") -a stop -p shanghai -n apple
         destroy: destroy a lava docker slave
-                 $(basename $0) -a destroy -p shanghai -n apple
+                 $(basename "$0") -a destroy -p shanghai -n apple
         (Here, if docker host name is shubuntu1, then lava worker name will be shanghai-shubuntu1-docker-apple)
 HELPDOC
 }
@@ -35,13 +35,13 @@ if [ 0 -ne $EUID ]; then
 fi
 
 # get options
-parsed_args=$(getopt -o a:p:n:v:x:m: -n $(basename $0) -- "$@")
+parsed_args=$(getopt -o a:p:n:v:x:m: -n "$(basename "$0")" -- "$@")
 if [ 0 -ne $? ]; then
     usage
     exit 1
 fi
 eval set -- "${parsed_args}"
-if [[ '--' == $1 ]]; then
+if [[ '--' == "$1" ]]; then
     usage
     exit 1
 fi
@@ -101,10 +101,10 @@ case "$action" in
         fi
 
         docker build \
-            --build-arg build_from=$version \
-            --build-arg http_proxy=$http_proxy \
+            --build-arg build_from="$version" \
+            --build-arg http_proxy="$http_proxy" \
             --no-cache \
-            -t lava-dispatcher-android:$version .
+            -t lava-dispatcher-android:"$version" .
         ;;
 
     start)
@@ -114,19 +114,19 @@ case "$action" in
             exit 1
         fi
 
-        status=$(docker inspect --format '{{ .State.Status }}' $container_name 2>&1)
+        status=$(docker inspect --format '{{ .State.Status }}' "$container_name" 2>&1)
         if [[ $? -eq 0 ]]; then
             if [[ $status == 'exited' ]]; then
                 echo "Slave existed, start it for you now."
-                rm -fr ~/.lava/$container_name
-                docker start $container_name
+                rm -fr ~/.lava/"$container_name"
+                docker start "$container_name"
             else
                 echo "Slave already running, no action perform."
             fi
         else
             echo "Slave not exist, set a new for you now."
 
-            no=$(docker images -q lava-dispatcher-android:$version | wc -l)
+            no=$(docker images -q lava-dispatcher-android:"$version" | wc -l)
             if [[ $no -eq 0 ]]; then
                 echo "No local docker image found, use prebuilt image on dockerhub."
                 target_image=atline/lava-dispatcher-android:$version
@@ -135,19 +135,19 @@ case "$action" in
                 target_image=lava-dispatcher-android:$version
             fi
 
-            rm -fr ~/.lava/$container_name
+            rm -fr ~/.lava/"$container_name"
             docker run -d --privileged \
                 -v /dev:/dev \
-                -v ~/.lava/$container_name:/dev/bus/usb \
+                -v ~/.lava/"$container_name":/dev/bus/usb \
                 -v /dev/bus/usb:/lava_usb_bus \
                 -v /labScripts:/labScripts \
                 -v /local/lava-ref-binaries:/local/lava-ref-binaries \
-                -e DISPATCHER_HOSTNAME=$dispatcher_hostname \
-                -e LOGGER_URL=$logger_url \
-                -e MASTER_URL=$master_url \
-                -e http_proxy=$proxy \
-                --name $container_name \
-                $target_image
+                -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
+                -e LOGGER_URL="$logger_url" \
+                -e MASTER_URL="$master_url" \
+                -e http_proxy="$proxy" \
+                --name "$container_name" \
+                "$target_image"
         fi
         ;;
 
@@ -158,7 +158,7 @@ case "$action" in
             exit 1
         fi
 
-        docker stop $container_name
+        docker stop "$container_name"
         ;;
 
     destroy)
@@ -168,7 +168,7 @@ case "$action" in
             exit 1
         fi
 
-        docker rm -f $container_name
+        docker rm -f "$container_name"
         ;;
 
     *)

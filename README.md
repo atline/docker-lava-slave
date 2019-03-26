@@ -31,7 +31,7 @@ At last, an enhanced `lava_lxc_device_add.py` had to be added to image to make d
 
 ## Slave Control Script
 
-The slave script (`lava_docker_slave.sh`) must be executed with root permission, you can use `./lava_docker_slave.sh` to get the usage of this install script, similar to next:
+The slave script (`lava_docker_slave.sh`) could be executed with root permission or use `sudo usermod -aG docker $USER` to grants privileges to current user. You can use `./lava_docker_slave.sh` to get the usage of this install script, similar to next:
 
     NAME
             lava_docker_slave.sh - lava android docker slave install script

@@ -132,7 +132,8 @@ case "$action" in
                 target_image=lava-dispatcher-android:$version
             fi
 
-            rm -fr ~/.lava/"$container_name"
+            mkdir -p ~/.lava
+            rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
             docker run -d --privileged \
                 -v /dev:/dev \
                 -v ~/.lava/"$container_name":/dev/bus/usb \

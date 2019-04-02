@@ -29,8 +29,11 @@ HELPDOC
 }
 
 # get options
+set +e
 parsed_args=$(getopt -o a:p:n:v:x:m: -n "$(basename "$0")" -- "$@")
-if [ 0 -ne $? ]; then
+rc=$?
+set -e
+if [ 0 -ne $rc ]; then
     usage
     exit 1
 fi
@@ -115,7 +118,7 @@ case "$action" in
         if [[ $rc -eq 0 ]]; then
             if [[ $status == 'exited' ]]; then
                 echo "Slave existed, start it for you now."
-                rm -fr ~/.lava/"$container_name"
+                rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
                 docker start "$container_name"
             else
                 echo "Slave already running, no action perform."
@@ -144,6 +147,7 @@ case "$action" in
                 -e LOGGER_URL="$logger_url" \
                 -e MASTER_URL="$master_url" \
                 -e http_proxy="$proxy" \
+                -e master="$master" \
                 --name "$container_name" \
                 "$target_image"
         fi

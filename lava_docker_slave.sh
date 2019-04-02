@@ -118,7 +118,7 @@ case "$action" in
         if [[ $rc -eq 0 ]]; then
             if [[ $status == 'exited' ]]; then
                 echo "Slave existed, start it for you now."
-                rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
+                sudo rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
                 docker start "$container_name"
             else
                 echo "Slave already running, no action perform."
@@ -136,7 +136,7 @@ case "$action" in
             fi
 
             mkdir -p ~/.lava
-            rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
+            sudo rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
             docker run -d --privileged \
                 -v /dev:/dev \
                 -v ~/.lava/"$container_name":/dev/bus/usb \

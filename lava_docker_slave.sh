@@ -4,22 +4,23 @@ function usage()
 {
     cat<<-HELPDOC
 NAME
-        $(basename "$0") - lava android docker slave install script
+        $(basename "$0") - lava docker slave install script
 SYNOPSIS
-        $(basename "$0") -a <action> -p <prefix> -n <name> -v <version> -x <proxy> -m <master>
+        $(basename "$0") -a <action> -p <prefix> -n <name> -v <version> -t <type> -x <proxy> -m <master>
 DESCRIPTION
         -a:     specify action of this script
         -p:     prefix of worker name, fill in site please
         -n:     unique name for user to distinguish other worker
         -v:     version of lava dispatcher, e.g. 2019.01, 2019.03, etc
+        -t:     type of lava slave image, available: android, linux
         -x:     local http proxy, e.g. http://apac.nics.nxp.com, http://emea.nics.nxp.com:8080, http://amec.nics.nxp.com:8080
         -m:     the master this slave will connect to
 
         Example:
         build:   can skip this if want to use prebuilt customized docker image on dockerhub
-                 $(basename "$0") -a build -v 2019.03 -x http://apac.nics.nxp.com:8080
+                 $(basename "$0") -a build -v 2019.03 -t android -x http://apac.nics.nxp.com:8080
         start:   new/start a lava docker slave
-                 $(basename "$0") -a start -p shanghai -n apple -v 2019.03 -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
+                 $(basename "$0") -a start -p shanghai -n apple -v 2019.03 -t android -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
         stop:    stop a lava docker slave
                  $(basename "$0") -a stop -p shanghai -n apple
         destroy: destroy a lava docker slave
@@ -30,7 +31,7 @@ HELPDOC
 
 # get options
 set +e
-parsed_args=$(getopt -o a:p:n:v:x:m: -n "$(basename "$0")" -- "$@")
+parsed_args=$(getopt -o a:p:n:v:t:x:m: -n "$(basename "$0")" -- "$@")
 rc=$?
 set -e
 if [ 0 -ne $rc ]; then
@@ -63,6 +64,10 @@ do
             version=$2
             shift 2
             ;;
+        -t)
+            typ=$2
+            shift 2
+            ;;
         -x)
             proxy=$2
             shift 2
@@ -91,8 +96,8 @@ container_name=$prefix-$(hostname)-docker-$name
 # start logic with different actions
 case "$action" in
     build)
-        if [[ ! $version || ! $proxy ]]; then
-            echo "Fatal: -v, -x required for build!"
+        if [[ ! $version || ! $typ || ! $proxy ]]; then
+            echo "Fatal: -v, -t, -x required for build!"
             usage
             exit 1
         fi
@@ -101,12 +106,12 @@ case "$action" in
             --build-arg build_from="$version" \
             --build-arg http_proxy="$http_proxy" \
             --no-cache \
-            -t lava-dispatcher-android:"$version" .
+            -t lava-dispatcher-"$typ":"$version" -f Dockerfile."$typ" .
         ;;
 
     start)
-        if [[ ! $prefix || ! $name || ! $version || ! $proxy || ! $master ]]; then
-            echo "Fatal: -p, -n, -v, -x, -m required for start!"
+        if [[ ! $prefix || ! $name || ! $version || ! $typ || ! $proxy || ! $master ]]; then
+            echo "Fatal: -p, -n, -v, -t, -x, -m required for start!"
             usage
             exit 1
         fi
@@ -118,7 +123,16 @@ case "$action" in
         if [[ $rc -eq 0 ]]; then
             if [[ $status == 'exited' ]]; then
                 echo "Slave existed, start it for you now."
-                sudo rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
+                if [[ $typ == "android" ]]; then
+                    echo "Start to clean unused data..."
+                    sudo rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
+                elif [[ $typ == "linux" ]]; then
+                    echo "Start to stop tftp & nfs service in host..."
+                    sudo service tftpd-hpa stop > /dev/null 2>&1 || true
+                    sudo service rpcbind stop > /dev/null 2>&1 || true
+                    sudo service nfs-kernel-server stop > /dev/null 2>&1 || true
+                    sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
+                fi
                 docker start "$container_name"
             else
                 echo "Slave already running, no action perform."
@@ -126,30 +140,51 @@ case "$action" in
         else
             echo "Slave not exist, set a new for you now."
 
-            no=$(docker images -q lava-dispatcher-android:"$version" | wc -l)
+            no=$(docker images -q lava-dispatcher-"$typ":"$version" | wc -l)
             if [[ $no -eq 0 ]]; then
                 echo "No local docker image found, use prebuilt image on dockerhub."
-                target_image=atline/lava-dispatcher-android:$version
+                target_image=atline/lava-dispatcher-$typ:$version
             else
                 echo "Use local built docker image."
-                target_image=lava-dispatcher-android:$version
+                target_image=lava-dispatcher-$typ:$version
             fi
 
-            mkdir -p ~/.lava
-            sudo rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
-            docker run -d --privileged \
-                -v /dev:/dev \
-                -v ~/.lava/"$container_name":/dev/bus/usb \
-                -v /dev/bus/usb:/lava_usb_bus \
-                -v /labScripts:/labScripts \
-                -v /local/lava-ref-binaries:/local/lava-ref-binaries \
-                -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
-                -e LOGGER_URL="$logger_url" \
-                -e MASTER_URL="$master_url" \
-                -e http_proxy="$proxy" \
-                -e master="$master" \
-                --name "$container_name" \
-                "$target_image"
+            if [[ $typ == "android" ]]; then
+                mkdir -p ~/.lava
+                echo "Start to clean unused data..."
+                sudo rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
+                docker run -d --privileged \
+                    -v /dev:/dev \
+                    -v ~/.lava/"$container_name":/dev/bus/usb \
+                    -v /dev/bus/usb:/lava_usb_bus \
+                    -v /labScripts:/labScripts \
+                    -v /local/lava-ref-binaries:/local/lava-ref-binaries \
+                    -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
+                    -e LOGGER_URL="$logger_url" \
+                    -e MASTER_URL="$master_url" \
+                    -e http_proxy="$proxy" \
+                    -e master="$master" \
+                    --name "$container_name" \
+                    "$target_image"
+            elif [[ $typ == "linux" ]]; then
+                echo "Start to stop tftp & nfs service in host..."
+                sudo service tftpd-hpa stop > /dev/null 2>&1 || true
+                sudo service rpcbind stop > /dev/null 2>&1 || true
+                sudo service nfs-kernel-server stop > /dev/null 2>&1 || true
+                sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
+                docker run -d --net=host --privileged \
+                    -v /dev:/dev \
+                    -v /labScripts:/labScripts \
+                    -v /local/lava-ref-binaries:/local/lava-ref-binaries \
+                    -v /var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp \
+                    -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
+                    -e LOGGER_URL="$logger_url" \
+                    -e MASTER_URL="$master_url" \
+                    -e http_proxy="$proxy" \
+                    -e master="$master" \
+                    --name "$container_name" \
+                    "$target_image"
+            fi
         fi
         ;;
 
@@ -161,6 +196,10 @@ case "$action" in
         fi
 
         docker stop "$container_name"
+        if [[ $typ == "linux" ]]; then
+            echo "Start to destory nfs port."
+            sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
+        fi
         ;;
 
     destroy)
@@ -171,6 +210,10 @@ case "$action" in
         fi
 
         docker rm -f "$container_name"
+        if [[ $typ == "linux" ]]; then
+            echo "Start to destory nfs port."
+            sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
+        fi
         ;;
 
     *)

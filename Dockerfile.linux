@@ -12,4 +12,5 @@ apt-get update;\
 apt-get install -y lavacli;\
 apt-get install -y vim --no-install-recommends;\
 apt-get install -y python3-pip --no-install-recommends;\
+rm -rf /var/lib/apt/lists/*;\
 pip3 install pyserial;

@@ -151,6 +151,9 @@ case "$action" in
 
             mkdir -p ~/.config
             touch ~/.config/lavacli.yaml
+            if [ ! -s "~/.config/lavacli.yaml" ]; then
+                echo "{}" > ~/.config/lavacli.yaml
+            fi
 
             if [[ $typ == "android" ]]; then
                 mkdir -p ~/.lava
@@ -164,8 +167,8 @@ case "$action" in
                     -v /dev/bus/usb:/lava_usb_bus \
                     -v /labScripts:/labScripts \
                     -v /local/lava-ref-binaries:/local/lava-ref-binaries \
-                    -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
                     -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
+                    -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
                     -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
                     -e LOGGER_URL="$logger_url" \
                     -e MASTER_URL="$master_url" \

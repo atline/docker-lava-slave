@@ -151,7 +151,7 @@ case "$action" in
 
             mkdir -p ~/.config
             touch ~/.config/lavacli.yaml
-            if [ ! -s "~/.config/lavacli.yaml" ]; then
+            if [ ! -s ~/.config/lavacli.yaml ]; then
                 echo "{}" > ~/.config/lavacli.yaml
             fi
 

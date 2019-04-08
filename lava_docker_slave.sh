@@ -125,7 +125,7 @@ case "$action" in
                 echo "Slave existed, start it for you now."
                 if [[ $typ == "android" ]]; then
                     echo "Start to clean unused data..."
-                    sudo rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
+                    sudo rm -fr ~/.lava/"$container_name"/dumb && mkdir -p ~/.lava/"$container_name"
                 elif [[ $typ == "linux" ]]; then
                     echo "Start to stop tftp & nfs service in host..."
                     sudo service tftpd-hpa stop > /dev/null 2>&1 || true
@@ -149,16 +149,23 @@ case "$action" in
                 target_image=lava-dispatcher-$typ:$version
             fi
 
+            mkdir -p ~/.config
+            touch ~/.config/lavacli.yaml
+
             if [[ $typ == "android" ]]; then
                 mkdir -p ~/.lava
                 echo "Start to clean unused data..."
-                sudo rm -fr ~/.lava/"$container_name" && mkdir -p ~/.lava/"$container_name"
+                sudo rm -fr ~/.lava/"$container_name"/dumb && \
+                    mkdir -p ~/.lava/"$container_name"/dumb && \
+                    touch ~/.lava/"$container_name"/ser2net.conf
                 docker run -d --privileged \
                     -v /dev:/dev \
-                    -v ~/.lava/"$container_name":/dev/bus/usb \
+                    -v ~/.lava/"$container_name"/dumb:/dev/bus/usb \
                     -v /dev/bus/usb:/lava_usb_bus \
                     -v /labScripts:/labScripts \
                     -v /local/lava-ref-binaries:/local/lava-ref-binaries \
+                    -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
+                    -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
                     -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
                     -e LOGGER_URL="$logger_url" \
                     -e MASTER_URL="$master_url" \
@@ -172,11 +179,14 @@ case "$action" in
                 sudo service rpcbind stop > /dev/null 2>&1 || true
                 sudo service nfs-kernel-server stop > /dev/null 2>&1 || true
                 sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
+                mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
                 docker run -d --net=host --privileged \
                     -v /dev:/dev \
                     -v /labScripts:/labScripts \
                     -v /local/lava-ref-binaries:/local/lava-ref-binaries \
                     -v /var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp \
+                    -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
+                    -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
                     -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
                     -e LOGGER_URL="$logger_url" \
                     -e MASTER_URL="$master_url" \

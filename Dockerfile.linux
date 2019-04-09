@@ -1,5 +1,4 @@
 ARG build_from
-ARG http_proxy
 
 FROM lavasoftware/lava-dispatcher:$build_from
 

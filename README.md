@@ -28,11 +28,11 @@ Currently, it just supports android & linux, we separate the solutions just beca
 
 * _Limit:_
 
- 1. Can no longer specify android host operation's environment, adb operation will be run in docker debian container.
+  * Can no longer specify android host operation's environment, adb operation will be run in docker debian container.
 
- 2. Cannot use host's adb daemon together with this solution.
+  * Cannot use host's adb daemon together with this solution.
 
- 3. Cannot add more than one device to one container, that means in one physical machine, we need multiple containers together to support multiple devices.
+  * Cannot add more than one device to one container, that means in one physical machine, we need multiple containers together to support multiple devices.
 
     Sample architecture like follows:
 
@@ -49,7 +49,7 @@ Currently, it just supports android & linux, we separate the solutions just beca
 
 * _Limit:_
 
-    This solution share the network namespace of host, this is because if we use the default docker0 bridge, the container's ip will be a internal ip which cannot not be connected by device when DUT do tftp & nfs operation. So, we choose to share host's network namespace.
+    This solution share the network namespace of host, this is because if we use the default docker0 bridge, the container's ip will be an internal ip which cannot not be connected by device when DUT do tftp & nfs operation. So, we choose to share host's network namespace.
 
     As a result, **only** one linux container could be active at the same time on physical machine. Meanwhile, the `slave control script` will automatically close host's tftp & nfs for you when start linux container.
 

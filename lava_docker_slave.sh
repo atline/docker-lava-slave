@@ -125,7 +125,7 @@ case "$action" in
                 echo "Slave existed, start it for you now."
                 if [[ $typ == "android" ]]; then
                     echo "Try to stop adb server on host..."
-                    sudo adb kill-server
+                    sudo adb kill-server > /dev/null 2>&1
                     sudo rm -fr ~/.lava/"$container_name"/dumb && \
                         mkdir -p ~/.lava/"$container_name"/dumb && \
                         touch ~/.lava/"$container_name"/ser2net.conf
@@ -161,7 +161,7 @@ case "$action" in
 
             if [[ $typ == "android" ]]; then
                 echo "Try to stop adb server on host..."
-                sudo adb kill-server
+                sudo adb kill-server > /dev/null 2>&1
                 sudo rm -fr ~/.lava/"$container_name"/dumb && \
                     mkdir -p ~/.lava/"$container_name"/dumb && \
                     touch ~/.lava/"$container_name"/ser2net.conf
@@ -238,3 +238,5 @@ case "$action" in
         usage
         exit 1
 esac
+
+echo "Congratulations, action performed successfully."

@@ -124,14 +124,18 @@ case "$action" in
             if [[ $status == 'exited' ]]; then
                 echo "Slave existed, start it for you now."
                 if [[ $typ == "android" ]]; then
-                    echo "Start to clean unused data..."
-                    sudo rm -fr ~/.lava/"$container_name"/dumb && mkdir -p ~/.lava/"$container_name"
+                    echo "Try to stop adb server on host..."
+                    sudo adb kill-server
+                    sudo rm -fr ~/.lava/"$container_name"/dumb && \
+                        mkdir -p ~/.lava/"$container_name"/dumb && \
+                        touch ~/.lava/"$container_name"/ser2net.conf
                 elif [[ $typ == "linux" ]]; then
-                    echo "Start to stop tftp & nfs service in host..."
+                    echo "Try to stop tftp & nfs service on host..."
                     sudo service tftpd-hpa stop > /dev/null 2>&1 || true
                     sudo service rpcbind stop > /dev/null 2>&1 || true
                     sudo service nfs-kernel-server stop > /dev/null 2>&1 || true
                     sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
+                    mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
                 fi
                 docker start "$container_name"
             else
@@ -156,8 +160,8 @@ case "$action" in
             fi
 
             if [[ $typ == "android" ]]; then
-                mkdir -p ~/.lava
-                echo "Start to clean unused data..."
+                echo "Try to stop adb server on host..."
+                sudo adb kill-server
                 sudo rm -fr ~/.lava/"$container_name"/dumb && \
                     mkdir -p ~/.lava/"$container_name"/dumb && \
                     touch ~/.lava/"$container_name"/ser2net.conf
@@ -177,7 +181,7 @@ case "$action" in
                     --name "$container_name" \
                     "$target_image"
             elif [[ $typ == "linux" ]]; then
-                echo "Start to stop tftp & nfs service in host..."
+                echo "Try to stop tftp & nfs service on host..."
                 sudo service tftpd-hpa stop > /dev/null 2>&1 || true
                 sudo service rpcbind stop > /dev/null 2>&1 || true
                 sudo service nfs-kernel-server stop > /dev/null 2>&1 || true

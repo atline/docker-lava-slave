@@ -134,6 +134,8 @@ case "$action" in
                     sudo service tftpd-hpa stop > /dev/null 2>&1 || true
                     sudo service rpcbind stop > /dev/null 2>&1 || true
                     sudo service nfs-kernel-server stop > /dev/null 2>&1 || true
+                    sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
+                    sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
                     sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
                     mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
                 fi
@@ -185,6 +187,8 @@ case "$action" in
                 sudo service tftpd-hpa stop > /dev/null 2>&1 || true
                 sudo service rpcbind stop > /dev/null 2>&1 || true
                 sudo service nfs-kernel-server stop > /dev/null 2>&1 || true
+                sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
+		        sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
                 sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
                 mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
                 docker run -d --net=host --privileged \
@@ -213,8 +217,11 @@ case "$action" in
         fi
 
         docker stop "$container_name"
+
         if [[ $typ == "linux" ]]; then
             echo "Start to destory nfs port."
+            sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
+            sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
             sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
         fi
         ;;
@@ -227,8 +234,11 @@ case "$action" in
         fi
 
         docker rm -f "$container_name"
+
         if [[ $typ == "linux" ]]; then
             echo "Start to destory nfs port."
+            sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
+            sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
             sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
         fi
         ;;

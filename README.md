@@ -10,8 +10,6 @@ To use docker solution to manage a customized lava lab, we do some extension bas
 
 * As we persist lavacli identity, ser2net configure, and other lab scripts with bind mount, it means upgrade/re-setup lava slave will require nothing from user side to reconfigure.
 
-* For android, even job failure, we can still keep a spot to debug as docker will not leave but lxc will be stop by lava.
-
 ### Detail solutions:
 
 Currently, it just supports android & linux, we separate the solutions just because the way to configure containers may varies from a variety of situations to situations.

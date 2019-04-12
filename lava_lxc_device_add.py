@@ -50,6 +50,29 @@ def setup_logger(options):
 
 
 def main():
+    # Add udev remove action
+    import re
+    import os
+
+    base_path = '/etc/udev/rules.d'
+    for per_file in [i for i in os.listdir(base_path) \
+                    if os.path.isfile(os.path.join(base_path, i)) \
+                    and os.path.splitext(i)[1]=='.rules' \
+                    and os.path.splitext(i)[0].startswith('100-lava-')]:
+        candidate = []
+        for line in open(os.path.join(base_path, per_file)):
+            if 'ACTION=="add"' in line:
+                pattern = re.compile(r'RUN\+=.+')
+                line = re.sub(pattern, 'RUN+="/bin/rm -fr /dev/$name"', line.replace("add", "remove").replace("ATTR{serial}", "ENV{ID_SERIAL_SHORT}"))
+                candidate.append(line)
+            elif line in candidate:
+                candidate.remove(line)
+
+        if candidate:
+            with open(os.path.join(base_path, per_file), "a") as f_obj:
+                f_obj.write("\n".join(candidate))
+            os.system('udevadm control --reload-rules')
+
     # Configure the parser
     parser = argparse.ArgumentParser()
 
@@ -94,7 +117,9 @@ def main():
 
     usb_path = device.replace("/dev/bus/usb/", "")
     usb_bus, usb_device = usb_path.split('/')
-    lxc_cmd = "mkdir -p /dev/bus/usb/" + usb_bus + " && ln -s /lava_usb_bus/" + usb_path + " /dev/bus/usb/" + usb_path
+    lxc_cmd = "mkdir -p /dev/bus/usb/" + usb_bus + \
+        " && rm -fr /dev/bus/usb/" + usb_path + \
+        " && ln -s /lava_usb_bus/" + usb_path + " /dev/bus/usb/" + usb_path
     try:
         output = subprocess.check_output(  # nosec - internal
             lxc_cmd, stderr=subprocess.STDOUT, shell=True

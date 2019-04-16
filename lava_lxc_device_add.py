@@ -117,8 +117,8 @@ def main():
 
     usb_path = device.replace("/dev/bus/usb/", "")
     usb_bus, usb_device = usb_path.split('/')
-    lxc_cmd = "mkdir -p /dev/bus/usb/" + usb_bus + \
-        " && rm -fr /dev/bus/usb/" + usb_path + \
+    lxc_cmd = "rm -fr /dev/bus/usb/*" + \
+        " && mkdir -p /dev/bus/usb/" + usb_bus + \
         " && ln -s /lava_usb_bus/" + usb_path + " /dev/bus/usb/" + usb_path
     try:
         output = subprocess.check_output(  # nosec - internal

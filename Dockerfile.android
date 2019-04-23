@@ -2,6 +2,10 @@ ARG build_from
 
 FROM lavasoftware/lava-dispatcher:$build_from
 
+ENV LC_CTYPE C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV LANG C
+
 COPY ["lava_lxc_device_add.py", "/usr/share/lava-dispatcher/lava_lxc_device_add.py"]
 COPY ["lava-coordinator.conf", "/etc/lava-coordinator/lava-coordinator.conf"]
 

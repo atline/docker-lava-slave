@@ -93,6 +93,27 @@ logger_url=tcp://$master:5555
 master_url=tcp://$master:5556
 container_name=$prefix-$(hostname)-docker-$name
 
+declare CUR_DIR="$(cd "$(dirname "$0")"; pwd -P)"
+
+# parse advanced configure
+volume_string=""
+if [ -f $CUR_DIR/advanced.json ]; then
+    set +e
+    which jq > /dev/null
+    rc=$?
+    set -e
+    if [[ $rc -ne 0 ]]; then
+        echo "Add needed package on host."
+        sudo apt-get install -y jq
+    fi
+
+    volume=$(jq -r .volume[] $CUR_DIR/advanced.json)
+    for per_volume in $volume
+    do
+        volume_string="$volume_string -v $per_volume"
+    done
+fi
+
 # start logic with different actions
 case "$action" in
     build)
@@ -175,6 +196,7 @@ case "$action" in
                     -v /local/lava-ref-binaries:/local/lava-ref-binaries \
                     -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
                     -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
+                    $volume_string \
                     -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
                     -e LOGGER_URL="$logger_url" \
                     -e MASTER_URL="$master_url" \
@@ -198,6 +220,7 @@ case "$action" in
                     -v /var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp \
                     -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
                     -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
+                    $volume_string \
                     -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
                     -e LOGGER_URL="$logger_url" \
                     -e MASTER_URL="$master_url" \

@@ -98,16 +98,10 @@ declare CUR_DIR="$(cd "$(dirname "$0")"; pwd -P)"
 # parse advanced configure
 volume_string=""
 if [ -f $CUR_DIR/advanced.json ]; then
-    set +e
-    which jq > /dev/null
-    rc=$?
-    set -e
-    if [[ $rc -ne 0 ]]; then
-        echo "Add needed package on host."
-        sudo apt-get install -y jq
-    fi
+    volume=$(candidate=$(cat $CUR_DIR/advanced.json) \
+        docker run --rm -e candidate endeveit/docker-jq \
+        sh -c 'echo "$candidate" | jq -r ". | select(.volume != null) | .volume[]"')
 
-    volume=$(jq -r .volume[] $CUR_DIR/advanced.json)
     for per_volume in $volume
     do
         volume_string="$volume_string -v $per_volume"

@@ -95,4 +95,14 @@ The slave script (`lava_docker_slave.sh`) could be executed with root permission
                  lava_docker_slave.sh -a destroy -p shanghai -n apple
         (Here, if docker host name is shubuntu1, then lava worker name will be shanghai-shubuntu1-docker-apple)
 
+### About advanced.json:
+
+You can define some additional control parameters in `advanced.json` before new a container, this afford you some advanced ability to configure container.
+
+Currently it just support additional bind mount added, format as follows:
+
+    {
+        "volume": ["/host_folder_1:/container_folder_1", "/host_folder_2:/container_folder_2"]
+    }
+
 (The End)

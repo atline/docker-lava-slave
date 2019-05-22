@@ -29,6 +29,14 @@ DESCRIPTION
 HELPDOC
 }
 
+# get timezone
+function get_timezone()
+{
+    timezone=$(find /usr/share/zoneinfo/ -type f | xargs md5sum | \
+        grep $(md5sum /etc/localtime | cut -d ' ' -f1) | \
+        awk -F '/usr/share/zoneinfo/' '{print $2}' | tail -1)
+}
+
 # get options
 set +e
 parsed_args=$(getopt -o a:p:n:v:t:x:m: -n "$(basename "$0")" -- "$@")
@@ -95,6 +103,8 @@ container_name=$prefix-$(hostname)-docker-$name
 
 declare CUR_DIR="$(cd "$(dirname "$0")"; pwd -P)"
 
+get_timezone
+
 # parse advanced configure
 volume_string=""
 no_proxy=".sw.nxp.com,.freescale.net,10.0.0.0/8"
@@ -114,6 +124,7 @@ if [ -f $CUR_DIR/advanced.json ]; then
 fi
 
 # start logic with different actions
+
 case "$action" in
     build)
         if [[ ! $version || ! $typ || ! $proxy ]]; then
@@ -199,6 +210,7 @@ case "$action" in
                     -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
                     -e LOGGER_URL="$logger_url" \
                     -e MASTER_URL="$master_url" \
+                    -e TZ="$timezone" \
                     -e http_proxy="$proxy" \
                     -e no_proxy="$no_proxy" \
                     -e master="$master" \
@@ -224,6 +236,7 @@ case "$action" in
                     -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
                     -e LOGGER_URL="$logger_url" \
                     -e MASTER_URL="$master_url" \
+                    -e TZ="$timezone" \
                     -e http_proxy="$proxy" \
                     -e no_proxy="$no_proxy" \
                     -e master="$master" \

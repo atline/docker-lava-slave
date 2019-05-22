@@ -97,6 +97,7 @@ declare CUR_DIR="$(cd "$(dirname "$0")"; pwd -P)"
 
 # parse advanced configure
 volume_string=""
+no_proxy=".sw.nxp.com,.freescale.net,10.0.0.0/8"
 if [ -f $CUR_DIR/advanced.json ]; then
     volume=$(candidate=$(cat $CUR_DIR/advanced.json) \
         docker run --rm -e candidate endeveit/docker-jq \
@@ -106,6 +107,10 @@ if [ -f $CUR_DIR/advanced.json ]; then
     do
         volume_string="$volume_string -v $per_volume"
     done
+
+    no_proxy=$(candidate=$(cat $CUR_DIR/advanced.json) \
+        docker run --rm -e candidate endeveit/docker-jq \
+        sh -c 'echo "$candidate" | jq -r ". | select(.no_proxy != null) | .no_proxy"')
 fi
 
 # start logic with different actions
@@ -195,6 +200,7 @@ case "$action" in
                     -e LOGGER_URL="$logger_url" \
                     -e MASTER_URL="$master_url" \
                     -e http_proxy="$proxy" \
+                    -e no_proxy="$no_proxy" \
                     -e master="$master" \
                     --name "$container_name" \
                     "$target_image"
@@ -204,7 +210,7 @@ case "$action" in
                 sudo service rpcbind stop > /dev/null 2>&1 || true
                 sudo service nfs-kernel-server stop > /dev/null 2>&1 || true
                 sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
-		        sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
+                sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
                 sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
                 mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
                 docker run -d --net=host --privileged \
@@ -219,6 +225,7 @@ case "$action" in
                     -e LOGGER_URL="$logger_url" \
                     -e MASTER_URL="$master_url" \
                     -e http_proxy="$proxy" \
+                    -e no_proxy="$no_proxy" \
                     -e master="$master" \
                     --name "$container_name" \
                     "$target_image"

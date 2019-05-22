@@ -99,10 +99,11 @@ The slave script (`lava_docker_slave.sh`) could be executed with root permission
 
 You can define some additional control parameters in `advanced.json` before new a container, this afford you some advanced ability to configure container.
 
-Currently it just support additional bind mount added, format as follows:
+Some parameters' format as follows:
 
     {
-        "volume": ["/host_folder_1:/container_folder_1", "/host_folder_2:/container_folder_2"]
+        "volume": ["/host_folder_1:/container_folder_1", "/host_folder_2:/container_folder_2"],
+        "no_proxy": ".sw.nxp.com,.freescale.net,10.0.0.0/8"
     }
 
 (The End)

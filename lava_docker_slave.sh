@@ -162,6 +162,7 @@ case "$action" in
                         touch ~/.lava/"$container_name"/ser2net.conf
                 elif [[ $typ == "linux" ]]; then
                     echo "Try to stop tftp & nfs service on host..."
+                    sudo modprobe nfsd
                     sudo service tftpd-hpa stop > /dev/null 2>&1 || true
                     sudo service rpcbind stop > /dev/null 2>&1 || true
                     sudo service nfs-kernel-server stop > /dev/null 2>&1 || true

@@ -13,3 +13,9 @@ apt-get install -y lavacli;\
 apt-get install -y vim --no-install-recommends;\
 rm -rf /var/lib/apt/lists/*;\
 pip3 install pyserial;
+
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
+CMD ["/root/entrypoint.sh"]

@@ -26,3 +26,9 @@ apt-get -y autoremove;\
 rm -rf /var/lib/apt/lists/*;\
 pip3 install pyserial;\
 chmod 777 /usr/share/lava-dispatcher/lava_lxc_device_add.py
+
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
+CMD ["/root/entrypoint.sh"]

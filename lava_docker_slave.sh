@@ -6,7 +6,7 @@ function usage()
 NAME
         $(basename "$0") - lava docker slave install script
 SYNOPSIS
-        $(basename "$0") -a <action> -p <prefix> -n <name> -v <version> -t <type> -x <proxy> -m <master>
+        ./$(basename "$0") -a <action> -p <prefix> -n <name> -v <version> -t <type> -x <proxy> -m <master>
 DESCRIPTION
         -a:     specify action of this script
         -p:     prefix of worker name, fill in site please
@@ -18,13 +18,13 @@ DESCRIPTION
 
         Example:
         build:   can skip this if want to use prebuilt customized docker image on dockerhub
-                 $(basename "$0") -a build -v 2019.03 -t android -x http://apac.nics.nxp.com:8080
+                 ./$(basename "$0") -a build -v 2019.03 -t android -x http://apac.nics.nxp.com:8080
         start:   new/start a lava docker slave
-                 $(basename "$0") -a start -p shanghai -n apple -v 2019.03 -t android -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
+                 ./$(basename "$0") -a start -p shanghai -n apple -v 2019.03 -t android -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
         stop:    stop a lava docker slave
-                 $(basename "$0") -a stop -p shanghai -n apple
+                 ./$(basename "$0") -a stop -p shanghai -n apple
         destroy: destroy a lava docker slave
-                 $(basename "$0") -a destroy -p shanghai -n apple
+                 ./$(basename "$0") -a destroy -p shanghai -n apple
         (Here, if docker host name is shubuntu1, then lava worker name will be shanghai-shubuntu1-docker-apple)
 HELPDOC
 }

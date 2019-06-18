@@ -103,7 +103,10 @@ Some parameters' format as follows:
 
     {
         "volume": ["/host_folder_1:/container_folder_1", "/host_folder_2:/container_folder_2"],
-        "no_proxy": ".sw.nxp.com,.freescale.net,10.0.0.0/8"
+        "no_proxy": ".sw.nxp.com,.freescale.net,10.0.0.0/8",
+        "force_update": "true"
     }
+
+NOTE: above paremeters not all necessary, you can pick what you needed.
 
 (The End)

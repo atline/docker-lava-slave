@@ -108,6 +108,7 @@ get_timezone
 # parse advanced configure
 volume_string=""
 no_proxy=".sw.nxp.com,.freescale.net,10.0.0.0/8"
+force_update="false"
 if [ -f $CUR_DIR/advanced.json ]; then
     volume=$(candidate=$(cat $CUR_DIR/advanced.json) \
         docker run --rm -e candidate endeveit/docker-jq \
@@ -118,13 +119,18 @@ if [ -f $CUR_DIR/advanced.json ]; then
         volume_string="$volume_string -v $per_volume"
     done
 
-    no_proxy=$(candidate=$(cat $CUR_DIR/advanced.json) \
+    no_proxy_candidate=$(candidate=$(cat $CUR_DIR/advanced.json) \
         docker run --rm -e candidate endeveit/docker-jq \
         sh -c 'echo "$candidate" | jq -r ". | select(.no_proxy != null) | .no_proxy"')
+    no_proxy=${no_proxy_candidate:-$no_proxy}
+
+    force_update_candidate=$(candidate=$(cat $CUR_DIR/advanced.json) \
+        docker run --rm -e candidate endeveit/docker-jq \
+        sh -c 'echo "$candidate" | jq -r ". | select(.force_update != null) | .force_update"')
+    force_update=${force_update_candidate:-$force_update}
 fi
 
 # start logic with different actions
-
 case "$action" in
     build)
         if [[ ! $version || ! $typ || ! $proxy ]]; then
@@ -182,6 +188,9 @@ case "$action" in
             if [[ $no -eq 0 ]]; then
                 echo "No local docker image found, use prebuilt image on dockerhub."
                 target_image=atline/lava-dispatcher-$typ:$version
+                if [[ $force_update == "true" ]]; then
+                    docker pull $target_image
+                fi
             else
                 echo "Use local built docker image."
                 target_image=lava-dispatcher-$typ:$version

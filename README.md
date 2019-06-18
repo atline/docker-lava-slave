@@ -86,13 +86,13 @@ The slave script (`lava_docker_slave.sh`) could be executed with root permission
 
         Example:
         build:   can skip this if want to use prebuilt customized docker image on dockerhub
-                 lava_docker_slave.sh -a build -v 2019.03 -t android -x http://apac.nics.nxp.com:8080
+                 ./lava_docker_slave.sh -a build -v 2019.03 -t android -x http://apac.nics.nxp.com:8080
         start:   new/start a lava docker slave
-                 lava_docker_slave.sh -a start -p shanghai -n apple -v 2019.03 -t android -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
+                 ./lava_docker_slave.sh -a start -p shanghai -n apple -v 2019.03 -t android -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
         stop:    stop a lava docker slave
-                 lava_docker_slave.sh -a stop -p shanghai -n apple
+                 ./lava_docker_slave.sh -a stop -p shanghai -n apple
         destroy: destroy a lava docker slave
-                 lava_docker_slave.sh -a destroy -p shanghai -n apple
+                 ./lava_docker_slave.sh -a destroy -p shanghai -n apple
         (Here, if docker host name is shubuntu1, then lava worker name will be shanghai-shubuntu1-docker-apple)
 
 ### About advanced.json:

@@ -210,6 +210,7 @@ case "$action" in
                     touch ~/.lava/"$container_name"/ser2net.conf
                 docker run -d --privileged \
                     -v /dev:/dev \
+                    -v /var/run/docker.sock:/var/run/docker.sock \
                     -v ~/.lava/"$container_name"/dumb:/dev/bus/usb \
                     -v /dev/bus/usb:/lava_usb_bus \
                     -v /labScripts:/labScripts \
@@ -238,6 +239,7 @@ case "$action" in
                 mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
                 docker run -d --net=host --privileged \
                     -v /dev:/dev \
+                    -v /var/run/docker.sock:/var/run/docker.sock \
                     -v /labScripts:/labScripts \
                     -v /local/lava-ref-binaries:/local/lava-ref-binaries \
                     -v /var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp \

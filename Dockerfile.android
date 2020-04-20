@@ -25,6 +25,11 @@ apt-get install -y vim --no-install-recommends;\
 apt-get -y autoremove;\
 rm -rf /var/lib/apt/lists/*;\
 pip3 install pyserial;\
+wget https://download.docker.com/linux/static/stable/x86_64/docker-19.03.8.tgz && \
+tar zxvf docker-19.03.8.tgz && \
+mv docker/docker /usr/bin/docker && \
+rm -fr docker && \
+rm -fr docker-19.03.8.tgz && \
 chmod 777 /usr/share/lava-dispatcher/lava_lxc_device_add.py
 
 ENV TINI_VERSION v0.18.0

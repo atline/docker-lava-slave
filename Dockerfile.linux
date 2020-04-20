@@ -10,7 +10,7 @@ sed -i '/killproc -p/a\rm -f \$PIDFILE || true' /etc/init.d/ser2net;\
 apt-get update;\
 apt-get install -y python3-pip --no-install-recommends;\
 apt-get install -y lavacli;\
-apt-get install -y vim --no-install-recommends;\
+apt-get install -y vim wget --no-install-recommends;\
 rm -rf /var/lib/apt/lists/*;\
 wget https://download.docker.com/linux/static/stable/x86_64/docker-19.03.8.tgz && \
 tar zxvf docker-19.03.8.tgz && \

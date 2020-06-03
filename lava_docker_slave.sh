@@ -215,6 +215,7 @@ case "$action" in
                     -v /dev/bus/usb:/lava_usb_bus \
                     -v /labScripts:/labScripts \
                     -v /local/lava-ref-binaries:/local/lava-ref-binaries \
+                    -v /var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp \
                     -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
                     -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
                     $volume_string \

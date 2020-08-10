@@ -205,19 +205,16 @@ case "$action" in
             if [[ $typ == "android" ]]; then
                 echo "Try to stop adb server on host..."
                 sudo adb kill-server > /dev/null 2>&1 || true
-                sudo rm -fr ~/.lava/"$container_name"/dumb && \
-                    mkdir -p ~/.lava/"$container_name"/dumb && \
-                    touch ~/.lava/"$container_name"/ser2net.conf
+                sudo touch ~/.lava/"$container_name"/ser2net.conf
                 docker run -d --privileged \
                     -v /dev:/dev \
                     -v /var/run/docker.sock:/var/run/docker.sock \
-                    -v ~/.lava/"$container_name"/dumb:/dev/bus/usb \
-                    -v /dev/bus/usb:/lava_usb_bus \
                     -v /labScripts:/labScripts \
                     -v /local/lava-ref-binaries:/local/lava-ref-binaries \
                     -v /var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp \
                     -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
                     -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
+                    -v /sys/fs/cgroup:/sys/fs/cgroup \
                     $volume_string \
                     -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
                     -e LOGGER_URL="$logger_url" \
@@ -228,6 +225,7 @@ case "$action" in
                     -e master="$master" \
                     --name "$container_name" \
                     "$target_image"
+                echo 'Please execute "lava-dispatcher-host rules install" in container after install.'
             elif [[ $typ == "linux" ]]; then
                 echo "Try to stop tftp & nfs service on host..."
                 sudo modprobe nfsd

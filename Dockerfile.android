@@ -25,7 +25,8 @@ apt-get install -y vim wget --no-install-recommends;\
 apt-get -y autoremove;\
 rm -rf /var/lib/apt/lists/*;\
 pip3 install pyserial;\
-chmod 777 /usr/share/lava-dispatcher/lava_lxc_device_add.py
+chmod 777 /usr/share/lava-dispatcher/lava_lxc_device_add.py;\
+lava-dispatcher-host rules install
 
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini

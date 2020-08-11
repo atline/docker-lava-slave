@@ -225,7 +225,6 @@ case "$action" in
                     -e master="$master" \
                     --name "$container_name" \
                     "$target_image"
-                echo 'Please execute "lava-dispatcher-host rules install" in container after install.'
             elif [[ $typ == "linux" ]]; then
                 echo "Try to stop tftp & nfs service on host..."
                 sudo modprobe nfsd

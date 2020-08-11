@@ -163,9 +163,6 @@ case "$action" in
                 if [[ $typ == "android" ]]; then
                     echo "Try to stop adb server on host..."
                     sudo adb kill-server > /dev/null 2>&1 || true
-                    sudo rm -fr ~/.lava/"$container_name"/dumb && \
-                        mkdir -p ~/.lava/"$container_name"/dumb && \
-                        touch ~/.lava/"$container_name"/ser2net.conf
                 elif [[ $typ == "linux" ]]; then
                     echo "Try to stop tftp & nfs service on host..."
                     sudo modprobe nfsd
@@ -175,8 +172,8 @@ case "$action" in
                     sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
                     sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
                     sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
-                    mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
                 fi
+                mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
                 docker start "$container_name"
             else
                 echo "Slave already running, no action perform."

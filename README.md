@@ -12,20 +12,18 @@ To use docker solution to manage a customized lava lab, we do some extension bas
 
 ### Detail solutions:
 
-Currently, it just supports android & linux, we separate the solutions just because the way to configure containers may varies from a variety of situations to situations.
-
 * _Main extension:_
 
     * Enable tftp & nfs in container, this makes linux test out of box for use.
     * Enable udev in container, this makes android test out of box for use.
-    * Others misc.
+    * Other misc.
 
 * _Limit:_
   * Cannot use host's adb daemon together with this solution.
 
   * This solution share the network namespace of host, this is because if we use the default docker0 bridge, the container's ip will be an internal ip which cannot not be connected by device when DUT do tftp & nfs operation. So, we choose to share host's network namespace.
 
-    As a result, **only** one linux container could be active at the same time on physical machine. Meanwhile, the `slave control script` will automatically close host's tftp & nfs for you when start linux container.
+    As a result, **only** one container could be active at the same time on physical machine. Meanwhile, the `slave control script` will automatically close host's tftp & nfs for you when start container.
 
     Sample architecture like follows:
 

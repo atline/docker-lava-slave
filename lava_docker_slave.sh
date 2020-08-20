@@ -6,21 +6,20 @@ function usage()
 NAME
         $(basename "$0") - lava docker slave install script
 SYNOPSIS
-        ./$(basename "$0") -a <action> -p <prefix> -n <name> -v <version> -t <type> -x <proxy> -m <master>
+        ./$(basename "$0") -a <action> -p <prefix> -n <name> -v <version> -x <proxy> -m <master>
 DESCRIPTION
         -a:     specify action of this script
         -p:     prefix of worker name, fill in site please
         -n:     unique name for user to distinguish other worker
-        -v:     version of lava dispatcher, e.g. 2019.01, 2019.03, etc
-        -t:     type of lava slave image, available: android, linux
+        -v:     version of lava dispatcher, e.g. 2020.08, etc
         -x:     local http proxy, e.g. http://apac.nics.nxp.com, http://emea.nics.nxp.com:8080, http://amec.nics.nxp.com:8080
         -m:     the master this slave will connect to
 
         Example:
         build:   can skip this if want to use prebuilt customized docker image on dockerhub
-                 ./$(basename "$0") -a build -v 2019.03 -t android -x http://apac.nics.nxp.com:8080
+                 ./$(basename "$0") -a build -v 2020.08 -x http://apac.nics.nxp.com:8080
         start:   new/start a lava docker slave
-                 ./$(basename "$0") -a start -p shanghai -n apple -v 2019.03 -t android -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
+                 ./$(basename "$0") -a start -p shanghai -n apple -v 2020.08 -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
         stop:    stop a lava docker slave
                  ./$(basename "$0") -a stop -p shanghai -n apple
         destroy: destroy a lava docker slave
@@ -39,7 +38,7 @@ function get_timezone()
 
 # get options
 set +e
-parsed_args=$(getopt -o a:p:n:v:t:x:m: -n "$(basename "$0")" -- "$@")
+parsed_args=$(getopt -o a:p:n:v:x:m: -n "$(basename "$0")" -- "$@")
 rc=$?
 set -e
 if [ 0 -ne $rc ]; then
@@ -70,10 +69,6 @@ do
             ;;
         -v)
             version=$2
-            shift 2
-            ;;
-        -t)
-            typ=$2
             shift 2
             ;;
         -x)
@@ -133,8 +128,8 @@ fi
 # start logic with different actions
 case "$action" in
     build)
-        if [[ ! $version || ! $typ || ! $proxy ]]; then
-            echo "Fatal: -v, -t, -x required for build!"
+        if [[ ! $version || ! $proxy ]]; then
+            echo "Fatal: -v, -x required for build!"
             usage
             exit 1
         fi
@@ -143,12 +138,12 @@ case "$action" in
             --build-arg build_from="$version" \
             --build-arg http_proxy="$http_proxy" \
             --no-cache \
-            -t lava-dispatcher-"$typ":"$version" -f Dockerfile."$typ" .
+            -t lava-dispatcher:"$version" -f Dockerfile .
         ;;
 
     start)
-        if [[ ! $prefix || ! $name || ! $version || ! $typ || ! $proxy || ! $master ]]; then
-            echo "Fatal: -p, -n, -v, -t, -x, -m required for start!"
+        if [[ ! $prefix || ! $name || ! $version || ! $proxy || ! $master ]]; then
+            echo "Fatal: -p, -n, -v, -x, -m required for start!"
             usage
             exit 1
         fi
@@ -160,69 +155,10 @@ case "$action" in
         if [[ $rc -eq 0 ]]; then
             if [[ $status == 'exited' ]]; then
                 echo "Slave existed, start it for you now."
-                if [[ $typ == "android" ]]; then
-                    echo "Try to stop adb server on host..."
-                    sudo adb kill-server > /dev/null 2>&1 || true
-                elif [[ $typ == "linux" ]]; then
-                    echo "Try to stop tftp & nfs service on host..."
-                    sudo modprobe nfsd
-                    sudo service tftpd-hpa stop > /dev/null 2>&1 || true
-                    sudo service rpcbind stop > /dev/null 2>&1 || true
-                    sudo service nfs-kernel-server stop > /dev/null 2>&1 || true
-                    sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
-                    sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
-                    sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
-                fi
-                mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
-                docker start "$container_name"
-            else
-                echo "Slave already running, no action perform."
-            fi
-        else
-            echo "Slave not exist, set a new for you now."
 
-            no=$(docker images -q lava-dispatcher-"$typ":"$version" | wc -l)
-            if [[ $no -eq 0 ]]; then
-                echo "No local docker image found, use prebuilt image on dockerhub."
-                target_image=atline/lava-dispatcher-$typ:$version
-                if [[ $force_update == "true" ]]; then
-                    docker pull $target_image
-                fi
-            else
-                echo "Use local built docker image."
-                target_image=lava-dispatcher-$typ:$version
-            fi
-
-            mkdir -p ~/.config
-            touch ~/.config/lavacli.yaml
-            if [ ! -s ~/.config/lavacli.yaml ]; then
-                echo "{}" > ~/.config/lavacli.yaml
-            fi
-
-            if [[ $typ == "android" ]]; then
                 echo "Try to stop adb server on host..."
                 sudo adb kill-server > /dev/null 2>&1 || true
-                sudo touch ~/.lava/"$container_name"/ser2net.conf
-                docker run -d --privileged \
-                    -v /dev:/dev \
-                    -v /var/run/docker.sock:/var/run/docker.sock \
-                    -v /labScripts:/labScripts \
-                    -v /local/lava-ref-binaries:/local/lava-ref-binaries \
-                    -v /var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp \
-                    -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
-                    -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
-                    -v /sys/fs/cgroup:/sys/fs/cgroup \
-                    $volume_string \
-                    -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
-                    -e LOGGER_URL="$logger_url" \
-                    -e MASTER_URL="$master_url" \
-                    -e TZ="$timezone" \
-                    -e http_proxy="$proxy" \
-                    -e no_proxy="$no_proxy" \
-                    -e master="$master" \
-                    --name "$container_name" \
-                    "$target_image"
-            elif [[ $typ == "linux" ]]; then
+
                 echo "Try to stop tftp & nfs service on host..."
                 sudo modprobe nfsd
                 sudo service tftpd-hpa stop > /dev/null 2>&1 || true
@@ -231,26 +167,66 @@ case "$action" in
                 sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
                 sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
                 sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
+
                 mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
-                docker run -d --net=host --privileged \
-                    -v /dev:/dev \
-                    -v /var/run/docker.sock:/var/run/docker.sock \
-                    -v /labScripts:/labScripts \
-                    -v /local/lava-ref-binaries:/local/lava-ref-binaries \
-                    -v /var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp \
-                    -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
-                    -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
-                    $volume_string \
-                    -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
-                    -e LOGGER_URL="$logger_url" \
-                    -e MASTER_URL="$master_url" \
-                    -e TZ="$timezone" \
-                    -e http_proxy="$proxy" \
-                    -e no_proxy="$no_proxy" \
-                    -e master="$master" \
-                    --name "$container_name" \
-                    "$target_image"
+                docker start "$container_name"
+            else
+                echo "Slave already running, no action perform."
             fi
+        else
+            echo "Slave not exist, set a new for you now."
+
+            no=$(docker images -q lava-dispatcher:"$version" | wc -l)
+            if [[ $no -eq 0 ]]; then
+                echo "No local docker image found, use prebuilt image on dockerhub."
+                target_image=atline/lava-dispatcher:$version
+                if [[ $force_update == "true" ]]; then
+                    docker pull $target_image
+                fi
+            else
+                echo "Use local built docker image."
+                target_image=lava-dispatcher:$version
+            fi
+
+            mkdir -p ~/.config
+            touch ~/.config/lavacli.yaml
+            if [ ! -s ~/.config/lavacli.yaml ]; then
+                echo "{}" > ~/.config/lavacli.yaml
+            fi
+
+            echo "Try to stop tftp & nfs service on host..."
+            sudo modprobe nfsd
+            sudo service tftpd-hpa stop > /dev/null 2>&1 || true
+            sudo service rpcbind stop > /dev/null 2>&1 || true
+            sudo service nfs-kernel-server stop > /dev/null 2>&1 || true
+            sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
+            sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
+            sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
+
+            echo "Try to stop adb server on host..."
+            sudo adb kill-server > /dev/null 2>&1 || true
+
+            mkdir -p ~/.lava/"$container_name" && touch ~/.lava/"$container_name"/ser2net.conf
+
+            docker run -d --net=host --privileged \
+                -v /dev:/dev \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                -v /labScripts:/labScripts \
+                -v /local/lava-ref-binaries:/local/lava-ref-binaries \
+                -v /var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp \
+                -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
+                -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
+                -v /sys/fs/cgroup:/sys/fs/cgroup \
+                $volume_string \
+                -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
+                -e LOGGER_URL="$logger_url" \
+                -e MASTER_URL="$master_url" \
+                -e TZ="$timezone" \
+                -e http_proxy="$proxy" \
+                -e no_proxy="$no_proxy" \
+                -e master="$master" \
+                --name "$container_name" \
+                "$target_image"
         fi
         ;;
 
@@ -263,12 +239,10 @@ case "$action" in
 
         docker stop "$container_name"
 
-        if [[ $typ == "linux" ]]; then
-            echo "Start to destory nfs port."
-            sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
-            sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
-            sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
-        fi
+        echo "Start to destory nfs port."
+        sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
+        sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
+        sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
         ;;
 
     destroy)
@@ -280,12 +254,10 @@ case "$action" in
 
         docker rm -f "$container_name"
 
-        if [[ $typ == "linux" ]]; then
-            echo "Start to destory nfs port."
-            sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
-            sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
-            sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
-        fi
+        echo "Start to destory nfs port."
+        sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true
+        sudo start-stop-daemon --stop --oknodo --quiet --name rpc.svcgssd --user 0 > /dev/null 2>&1 || true
+        sudo start-stop-daemon --stop --oknodo --quiet --name nfsd --user 0 --signal 2 > /dev/null 2>&1 || true
         ;;
 
     *)

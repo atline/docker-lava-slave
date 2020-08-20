@@ -22,7 +22,9 @@ apt-get install -y lavacli;\
 apt-get install -y vim wget --no-install-recommends;\
 rm -rf /var/lib/apt/lists/*;\
 pip3 install pyserial;\
-lava-dispatcher-host rules install
+lava-dispatcher-host rules install;\
+wget --no-check-certificate -O /bin/uuu https://github.com/NXPmicro/mfgtools/releases/download/uuu_1.3.191/uuu;\
+chmod +x /bin/uuu
 
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini

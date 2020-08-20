@@ -16,7 +16,7 @@ sed -i '/\/usr\/bin\/lava-slave/i\service udev start\nservice ser2net start' /ro
 sed -i '/killproc -p/a\rm -f \$PIDFILE || true' /etc/init.d/ser2net;\
 apt-get update;\
 apt-get install -y nfs-kernel-server rpcbind --no-install-recommends;\
-sed -i '/\/usr\/bin\/lava-slave/i\service tftpd-hpa start\nrpcbind\nservice nfs-kernel-server start\nservice ser2net start' /root/entrypoint.sh;\
+sed -i '/\/usr\/bin\/lava-slave/i\service tftpd-hpa start\nrpcbind\nservice nfs-kernel-server start' /root/entrypoint.sh;\
 apt-get install -y python3-pip --no-install-recommends;\
 apt-get install -y lavacli;\
 apt-get install -y vim wget --no-install-recommends;\

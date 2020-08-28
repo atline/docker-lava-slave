@@ -226,6 +226,7 @@ case "$action" in
                 -e no_proxy="$no_proxy" \
                 -e master="$master" \
                 --name "$container_name" \
+                --hostname "$container_name" \
                 "$target_image"
         fi
         ;;

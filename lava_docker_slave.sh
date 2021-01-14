@@ -19,7 +19,7 @@ DESCRIPTION
         build:   can skip this if want to use prebuilt customized docker image on dockerhub
                  ./$(basename "$0") -a build -v 2020.08 -x http://apac.nics.nxp.com:8080
         start:   new/start a lava docker slave
-                 ./$(basename "$0") -a start -p shanghai -n apple -v 2020.08 -x http://apac.nics.nxp.com:8080 -m 10.192.225.2
+                 ./$(basename "$0") -a start -p shanghai -n apple -v 2020.08 -x http://apac.nics.nxp.com:8080 -m lava.sw.nxp.com
         stop:    stop a lava docker slave
                  ./$(basename "$0") -a stop -p shanghai -n apple
         destroy: destroy a lava docker slave
@@ -91,9 +91,8 @@ do
 done
 
 http_proxy=$proxy
-dispatcher_hostname=--hostname=$prefix-$(hostname)-docker-$name
-logger_url=tcp://$master:5555
-master_url=tcp://$master:5556
+worker_name="--name $prefix-$(hostname)-docker-$name"
+url="http://$master/"
 container_name=$prefix-$(hostname)-docker-$name
 
 declare CUR_DIR="$(cd "$(dirname "$0")"; pwd -P)"
@@ -214,13 +213,13 @@ case "$action" in
                 -v /labScripts:/labScripts \
                 -v /local/lava-ref-binaries:/local/lava-ref-binaries \
                 -v /var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp \
+                -v $container_name:/var/lib/lava/dispatcher/worker \
                 -v ~/.config/lavacli.yaml:/root/.config/lavacli.yaml \
                 -v ~/.lava/"$container_name"/ser2net.conf:/etc/ser2net.conf \
                 -v /sys/fs/cgroup:/sys/fs/cgroup \
                 $volume_string \
-                -e DISPATCHER_HOSTNAME="$dispatcher_hostname" \
-                -e LOGGER_URL="$logger_url" \
-                -e MASTER_URL="$master_url" \
+                -e WORKER_NAME="$worker_name" \
+                -e URL="$url" \
                 -e TZ="$timezone" \
                 -e http_proxy="$proxy" \
                 -e no_proxy="$no_proxy" \
@@ -254,6 +253,7 @@ case "$action" in
         fi
 
         docker rm -f "$container_name"
+        docker volume rm -f "$container_name"
 
         echo "Start to destory nfs port."
         sudo start-stop-daemon --stop --oknodo --quiet --name rpc.mountd --user 0 > /dev/null 2>&1 || true

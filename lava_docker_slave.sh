@@ -11,7 +11,7 @@ DESCRIPTION
         -a:     specify action of this script
         -p:     prefix of worker name, fill in site please
         -n:     unique name for user to distinguish other worker
-        -v:     version of lava dispatcher, e.g. 2020.08, etc
+        -v:     version of lava dispatcher, e.g. 2020.10, etc
         -x:     local http proxy, e.g. http://apac.nics.nxp.com, http://emea.nics.nxp.com:8080, http://amec.nics.nxp.com:8080
         -m:     the master this slave will connect to
 

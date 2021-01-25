@@ -209,6 +209,8 @@ case "$action" in
 
             docker run -d --net=host --privileged \
                 -v /dev:/dev \
+                -v /boot:/boot:ro \
+                -v /lib/modules:/lib/modules:ro \
                 -v /var/run/docker.sock:/var/run/docker.sock \
                 -v /labScripts:/labScripts \
                 -v /local/lava-ref-binaries:/local/lava-ref-binaries \
